@@ -1,0 +1,57 @@
+<!doctype html>
+<html>
+<head>
+    <meta charset="UTF-8"/>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Getting Started</title>
+    <link href="https://fonts.googleapis.com/css?family=Ubuntu&display=swap" rel="stylesheet">
+    <style>
+        html, body {
+            margin: 0;
+            padding: 0;
+            width: 100%;
+            height: 100%;
+            position: relative;
+        }
+
+        canvas {
+            width: 100%;
+            height: 100%;
+        }
+
+        .tagline {
+            position: absolute;
+            width: 100%;
+            text-align: center;
+            bottom: 30px;
+            left: 0;
+            color: black;
+            font-size: 2rem;
+            text-shadow: 1px 1px 0 #FFF, -1px -1px 0 #FFF, 1px -1px 0 #FFF, -1px 1px 0 #FFF, 1px 1px 0 #FFF;
+            letter-spacing: 2px;
+            font-family: "Ubuntu";
+        }
+    </style>
+</head>
+<body>
+<section style="position: relative">
+    <canvas id="town" width="1280" height="900"></canvas>
+</section>
+<section style="position: relative">
+    <canvas id="particles"></canvas>
+    <h1 class="tagline">DMS - нескромная мастерская скромного человека</h1>
+</section>
+<script>
+    function resize() {
+        var htmlCanvas = document.getElementById('particles');
+        htmlCanvas.width = window.innerWidth;
+        htmlCanvas.height = window.innerHeight;
+    }
+
+    document.body.onresize = resize;
+    resize();
+
+</script>
+<script src="main.js"></script>
+</body>
+</html>
