@@ -1,117 +1,220 @@
-import {createProgram, createShader, resizeContext} from "../WebGL/WebGLUtil";
-import {Color, House, Roof, TownObject} from "./town-objects";
-import FloatArrayWrapper from "../WebGL/wrappers/FloatArrayWrapper";
+import {resizeContext} from "../WebGL/WebGLUtil";
+import {calcHeight, Color, DebugFloor, House, PALLETS, Road, RoadDirection, TownObject, Tree} from "./town-objects";
 import Matrix4 from "../WebGL/Matrix4";
-import ByteArrayWrapper from "../WebGL/wrappers/ByteArrayWrapper";
-import WebGLDrawer from "../WebGL/WebGLDrawer";
+import DataBuffer from "../WebGL/wrappers/DataBuffer";
+import IndexBuffer from "../WebGL/wrappers/IndexBuffer";
+import WebGLProgramContext from "../WebGL/WebGLProgramContext";
+
+// original idea is https://codepen.io/smlsvnssn/pen/ZrVEaL
 
 export default class TownController {
-    el: HTMLCanvasElement;
-    ctx: WebGLRenderingContext;
+    readonly el: HTMLCanvasElement;
+    readonly bgColor: Color;
 
-    houseProgram: WebGLProgram;
-
-    bgColor: Color;
+    glProg!: WebGLProgramContext;
 
     grid: TownObject[][][] = [];
 
-    staticDrawer: WebGLDrawer<TownObject>;
+    gridWidth!: number;
+    gridHeight!: number;
+    readonly gridSize = 200;
+    readonly maxHeight = 600;
+    readonly minHeight = 100;
 
-    gridWidth = 5;
-    gridHeight = 5;
-    gridSize = 100;
+    heightFactor = 1; // 0.5 - all buildings are high, 2 - all buildings are low, ...
+
+    vertexBuffer = new DataBuffer(1);
+    indexBuffer = new IndexBuffer(1);
+
+    glVertexBuffer!: WebGLBuffer;
+    glIndexBuffer!: WebGLBuffer;
+
+    cameraRotation = 0
+    rotationSpeed = Math.PI / 1000
 
     constructor(canvas: HTMLCanvasElement, bgColor: Color) {
         this.el = canvas;
-        this.ctx = this.el.getContext('experimental-webgl') as WebGLRenderingContext;
-        if (!this.ctx) {
-            throw new Error('WebGL is not supported!');
-        }
         this.bgColor = bgColor;
+        this.initGLContext();
+        this.generateGrid();
 
-        const vertexShaderCode =
-            'attribute vec4 a_position;' +
-            'attribute vec4 a_color;' +
+        this.drawNextFrame();
+    }
 
-            'uniform mat4 u_matrix;' +
+    private initGLContext() {
+        const vertexShaderCode = `
+            attribute vec4 a_position;
+            attribute vec3 a_normal;
+            attribute vec4 a_color;
 
-            'varying vec4 v_color;' +
+            uniform mat4 u_worldMatrix;
+            uniform mat4 u_worldProjectionMatrix;
 
-            'void main() {' +
-            '  gl_Position = u_matrix * a_position;' +
-            '  v_color = a_color;' +
-            '}';
-        const vertexShader = createShader(this.ctx, this.ctx.VERTEX_SHADER, vertexShaderCode);
+            varying vec4 v_color;
+            varying vec3 v_normal;
 
-        const fragmentShaderCode =
-            'precision mediump float;' +
+            void main() {
+              gl_Position = u_worldProjectionMatrix * a_position;
+              v_color = a_color;
+              v_normal = mat3(u_worldMatrix) * a_normal;
+              // v_normal = a_normal;
+            }
+        `;
+        const fragmentShaderCode = `
+            #ifdef GL_FRAGMENT_PRECISION_HIGH
+                precision highp float;
+            #else
+                precision mediump float;
+            #endif
+            
+            uniform vec3 u_lightDirection;
 
-            'varying vec4 v_color;' +
+            varying vec4 v_color;
+            varying vec3 v_normal;
 
-            'void main() {' +
-            '   gl_FragColor = v_color;' +
-            '}';
-        const fragmentShader = createShader(this.ctx, this.ctx.FRAGMENT_SHADER, fragmentShaderCode);
+            void main() {
+                vec3 normal = normalize(v_normal);
+                vec3 lightDirection = normalize(u_lightDirection);
+                
+                float light = dot(normal, -lightDirection);
+            
+                gl_FragColor = v_color;
+                gl_FragColor.rgb *= light;
+            }
+        `;
 
-        this.houseProgram = createProgram(this.ctx, vertexShader, fragmentShader);
+        this.glProg = new WebGLProgramContext(this.el, vertexShaderCode, fragmentShaderCode,
+            ['a_position', 'a_normal', 'a_color'],
+            ['u_worldMatrix', 'u_worldProjectionMatrix', 'u_lightDirection']
+        );
+
+        this.glProg.gl.enable(this.glProg.gl.CULL_FACE);
+        this.glProg.gl.cullFace(this.glProg.gl.BACK);
+        this.glProg.gl.enable(this.glProg.gl.DEPTH_TEST);
+
+        this.glVertexBuffer = this.glProg.createBuffer()!;
+        this.glIndexBuffer = this.glProg.createBuffer()!;
+    }
+
+    private generateGrid() {
+        this.gridWidth = Math.ceil(this.el.clientWidth / this.gridSize) + 3;
+        this.gridHeight = Math.ceil(this.el.clientHeight / this.gridSize) + 3;
+
+        const randColor = () => PALLETS[Math.trunc(Math.random() * PALLETS.length)];
 
         this.grid = [];
         for (let x = 0; x < this.gridWidth; ++x) {
             this.grid[x] = [];
             for (let y = 0; y < this.gridHeight; ++y) {
                 this.grid[x][y] = [];
+
+                // this.grid[x][y].push(new DebugFloor(this.gridSize));
+                const r = Math.random();
+                if (r >= 0.5) {
+                    this.grid[x][y].push(new House(this.gridSize, calcHeight(x, y, this.gridWidth, this.gridHeight, this.heightFactor, this.maxHeight, this.minHeight), randColor()));
+                } else if (r >= 0.3) {
+                    this.grid[x][y].push(new Tree(this.gridSize));
+                }
             }
         }
-        this.grid[1][1].push(new House(40, 90, 40, new Color(50, 50, 50, 255), 50, 50));
-        this.grid[1][1].push(new Roof(this.grid[1][1][0] as House, new Color(75+100, 75 + 100, 75 + 100, 255), true, true));
-        this.grid[1][2].push(new House(30, 60, 30, new Color(75, 75, 75, 255), 50, 50));
-        this.grid[1][2].push(new Roof(this.grid[1][2][0] as House, new Color(75+100, 75 + 100, 75 + 100, 255), true, true));
 
-        const plainGrid: TownObject[] = [];
+        const xRoad = Math.trunc(Math.random() * this.gridWidth);
+        const yRoad = Math.trunc(Math.random() * this.gridHeight);
+        for (let x = 0; x < this.gridWidth; ++x) {
+            this.grid[x][yRoad] = [new Road(this.gridSize, RoadDirection.X)];
+        }
+        for (let y = 0; y < this.gridHeight; ++y) {
+            this.grid[xRoad][y] = [new Road(this.gridSize, RoadDirection.Y)];
+        }
+        this.grid[xRoad][yRoad] = [new Road(this.gridSize, RoadDirection.LINK)];
+    }
+
+    private drawNextFrame() {
+        window.requestAnimationFrame(this.drawNextFrame.bind(this));
+
+        let triangles = 0;
         this.grid.forEach((gridY, x) =>
             gridY.forEach((objs, y) =>
                 objs.forEach((o) => {
-                    o.setOffsetX(this.gridSize * x);
-                    o.setOffsetY(this.gridSize * y);
-                    plainGrid.push(o);
+                    o.frameUpdate();
+                    triangles += o.getTriangleCount();
                 })
             )
         );
 
-        this.staticDrawer = new WebGLDrawer<TownObject>(this.ctx, this.houseProgram, true, 3, (o) => o.getTriangleCount(),
-            'a_position', (o,b,off) => o.writeTriangles(b, off),
-            'a_color', (o,b,off) => o.writeColors(b, off));
-        this.staticDrawer.beforeDrawCall = (gl, prog) => {
-            // TODO: hardcoded value!!!
-            const matrix = new Matrix4(this.el.clientWidth, this.el.clientHeight, 1000);
-            matrix.xRotate(Math.PI / 1.5);
-            matrix.yRotate(0); // 45 deg
-            matrix.zRotate(- Math.PI/ 1.3);
-            matrix.translate(0,300,-100);
-            matrix.scale(1, 1, 1);
+        // approximated values
+        // triangle = 3 vertexes * (xyz + normal + rgba)
+        this.vertexBuffer.reserveAndClean(triangles * 3 * (3 * Float32Array.BYTES_PER_ELEMENT + 3 * Float32Array.BYTES_PER_ELEMENT + 4));
+        // triangle = 3 vertexes indexes
+        this.indexBuffer.reserveAndClean(triangles * 3 * Uint16Array.BYTES_PER_ELEMENT);
 
-            const matrixGLAttribute = gl.getUniformLocation(prog, "u_matrix");
-            gl.uniformMatrix4fv(matrixGLAttribute, false, matrix.data);
-        };
-        this.staticDrawer.objects = plainGrid;
+        this.grid.forEach((gridY, x) =>
+            gridY.forEach((objs, y) => {
 
-        this.anim();
-    }
+                const oldOffset = this.vertexBuffer.bytes;
+                objs.forEach((o) => {
+                    o.writeObject(this.vertexBuffer, this.indexBuffer);
+                });
 
-    private anim() {
-        //window.requestAnimationFrame(this.anim.bind(this));
+                // update X and Y offsets
+                if (this.vertexBuffer.bytes > oldOffset) {
+                    const slice = this.vertexBuffer.sliceFloat32(oldOffset);
+                    for (let i = 0; i < slice.length; i += 7) {
+                        slice[i + 0] += this.gridSize * x;
+                        slice[i + 1] += this.gridSize * y;
+                    }
+                }
+            })
+        );
 
-        resizeContext(this.ctx);
-        // const w = this.ctx.canvas.width;
-        // const h = this.ctx.canvas.height;
+        const gl = this.glProg.gl;
+        resizeContext(gl);
+        gl.clearColor(this.bgColor.r, this.bgColor.g, this.bgColor.b, this.bgColor.a);
+        gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
 
-        this.ctx.clearColor(this.bgColor.r, this.bgColor.g, this.bgColor.b, this.bgColor.a);
-        this.ctx.clear(this.ctx.COLOR_BUFFER_BIT | this.ctx.DEPTH_BUFFER_BIT);
+        this.glProg.useProgram();
 
-        this.ctx.enable(this.ctx.CULL_FACE);
-        this.ctx.cullFace(this.ctx.FRONT);
-        this.ctx.enable(this.ctx.DEPTH_TEST);
+        const FLOAT_SIZE = Float32Array.BYTES_PER_ELEMENT;
+        this.glProg.arrayBuffer(this.glVertexBuffer, 6 * FLOAT_SIZE + 4, {
+            a_position: {elems: 3, elType: gl.FLOAT, normalized: false, offsetBytes: 0},
+            a_normal: {elems: 3, elType: gl.FLOAT, normalized: false, offsetBytes: 3 * FLOAT_SIZE},
+            a_color: {elems: 4, elType: gl.UNSIGNED_BYTE, normalized: true, offsetBytes: 6 * FLOAT_SIZE},
+        }, this.vertexBuffer.sliceFloat32());
 
-        this.staticDrawer.draw();
+        this.glProg.indexBuffer(this.glIndexBuffer, this.indexBuffer.sliceUint16());
+
+        {
+            this.cameraRotation -= this.rotationSpeed;
+            if (this.cameraRotation < -Math.PI * 2) {
+                this.cameraRotation = 0;
+            }
+
+            // center of our coordinate system. We need to transform in into WebGL [-1;1] coordinates
+            // meanX and meanY must be 0 (center) in WebGL
+            const meanX = this.gridWidth * this.gridSize / 2;
+            const meanY = this.gridHeight * this.gridSize / 2;
+
+            // Calculate view matrix
+            const diameter = Math.max(this.gridWidth, this.gridHeight) * this.gridSize;
+            const radius = diameter / 2;
+            const eyeX = Math.sin(this.cameraRotation) * diameter + radius;
+            const eyeY = -Math.cos(this.cameraRotation) * diameter + radius;
+            const eyeZ = radius;
+            const viewMatrix = Matrix4.LookAt(eyeX, eyeY, eyeZ, meanX, meanY, 0, 0, 0, 1);
+
+            // Projection matrix. Here we transform our system -> WebGL coordinates
+            const worldProjectionMatrix = Matrix4.Ortho(
+                -this.glProg.width, this.glProg.width,
+                -this.glProg.height, this.glProg.height,
+                -10000, 10000
+            );
+            worldProjectionMatrix.multiply(viewMatrix);
+
+            this.glProg.uniformMatrix('u_worldMatrix', viewMatrix.data);
+            this.glProg.uniformMatrix('u_worldProjectionMatrix', worldProjectionMatrix.data);
+            this.glProg.uniformVector('u_lightDirection', -0.2, -0.5, -1);
+        }
+
+        this.glProg.drawElements(gl.TRIANGLES, this.indexBuffer.bytes / 2, gl.UNSIGNED_SHORT);
     }
 }

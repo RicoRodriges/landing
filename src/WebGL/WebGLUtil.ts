@@ -56,8 +56,9 @@ export function deleteProgram(gl: WebGLRenderingContext, program: WebGLProgram) 
 export function resizeContext(gl: WebGLRenderingContext) {
     const canvas = gl.canvas as HTMLCanvasElement;
 
-    const displayWidth = canvas.clientWidth;
-    const displayHeight = canvas.clientHeight;
+    const dpr = window.devicePixelRatio;
+    const displayWidth = Math.round(canvas.clientWidth * dpr);
+    const displayHeight = Math.round(canvas.clientHeight * dpr);
 
     if (canvas.width != displayWidth ||
         canvas.height != displayHeight) {
