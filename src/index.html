@@ -1,0 +1,160 @@
+<!doctype html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8"/>
+    <meta name="viewport" content="width=device-width, initial-scale=1"/>
+    <title>Getting Started</title>
+<!--    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1/dist/css/bootstrap.min.css" rel="stylesheet" crossorigin="anonymous">-->
+    <link href="https://fonts.googleapis.com/css?family=Ubuntu&display=swap" rel="stylesheet"/>
+    <style>
+        html, body {
+            margin: 0;
+            padding: 0;
+            font-family: "Ubuntu";
+        }
+
+        .with-background {
+            position: relative;
+        }
+        .background-container {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: -1;
+        }
+        .background {
+            position: sticky;
+            top: 0;
+        }
+        .fill-screen {
+            width: 100vw;
+            height: 100vh;
+            max-width: 100%;
+        }
+        .fill-container {
+            width: 100%;
+            height: 100%;
+        }
+
+        .canvas-text {
+            color: black;
+            text-shadow: 1px 1px 0 #FFF, -1px -1px 0 #FFF, 1px -1px 0 #FFF, -1px 1px 0 #FFF;
+            font-size: 1.4rem;
+        }
+
+        .top-container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: flex-start;
+        }
+        .middle-container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+        }
+        .bottom-container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: flex-end;
+        }
+
+        .center-text {
+            text-align: center;
+        }
+        .center-content {
+            margin: 0 auto;
+        }
+    </style>
+</head>
+<body>
+
+<section id="particles" class="with-background">
+    <div class="background-container">
+        <canvas class="background fill-screen"></canvas>
+    </div>
+    <div class="fill-screen bottom-container">
+        <h1 class="center-content center-text canvas-text" style="font-size:2rem;letter-spacing:2px;margin-bottom:2rem;">
+            DMS - нескромная мастерская скромного человека
+        </h1>
+    </div>
+</section>
+
+<section id="town" class="with-background">
+    <div class="background-container">
+        <canvas class="background fill-screen"></canvas>
+    </div>
+    <div class="fill-screen middle-container">
+        <h2 class="center-content center-text canvas-text">
+            Мы предпочитаем делать универсальные решения. Именно поэтому они легко масштабируются и кастомизируются под Ваши нужды.
+        </h2>
+        <p class="center-content center-text canvas-text">
+            Мы предпочитаем делать универсальные решения. Именно поэтому они легко масштабируются и кастомизируются под Ваши нужды.
+        </p>
+        <p class="center-content center-text canvas-text">
+            Вносим правки???
+        </p>
+    </div>
+    <div class="fill-screen middle-container">
+        <table class="center-content canvas-text">
+            <tr>
+                <td>Ширина:</td>
+                <td><input type="range" name="width" min="4" max="15" step="1"><span></span></td>
+            </tr>
+            <tr>
+                <td>Глубина:</td>
+                <td><input type="range" name="depth" min="4" max="15" step="1"><span></span></td>
+            </tr>
+            <tr>
+                <td>Высота:</td>
+                <td><input type="range" name="height" min="1" max="10" step="1"><span></span></td>
+            </tr>
+            <tr>
+                <td>Дороги:</td>
+                <td><input type="range" name="roads" min="0" max="6" step="1"><span></span></td>
+            </tr>
+            <tr>
+                <td>Население:</td>
+                <td><input type="range" name="population" min="1" max="8" step="1"><span></span></td>
+            </tr>
+            <tr>
+                <td>Растительность:</td>
+                <td><input type="range" name="vegetation" min="1" max="8" step="1"><span></span></td>
+            </tr>
+            <tr>
+                <td colspan="2" class="center-text">
+                    <button class="canvas-text">Внести правки</button>
+                </td>
+            </tr>
+        </table>
+    </div>
+</section>
+
+<section id="landscape" class="with-background">
+    <div class="background-container">
+        <div class="background fill-screen" style="overflow: hidden;">
+            <%= require('html-loader!./landscape/template.html').default %>
+        </div>
+    </div>
+    <div class="fill-screen middle-container">
+        <h2 class="center-content center-text canvas-text">
+            Мы работаем для Вас в любое время суток, постоянно, 24/7.
+        </h2>
+        <p class="center-content center-text canvas-text">
+            Мы предпочитаем делать универсальные решения. Именно поэтому они легко масштабируются и кастомизируются под Ваши нужды.
+        </p>
+        <p class="center-content center-text canvas-text">
+            Мы предпочитаем делать универсальные решения. Именно поэтому они легко масштабируются и кастомизируются под Ваши нужды.
+        </p>
+    </div>
+    <div class="fill-screen middle-container">
+        <button class="center-content center-text canvas-text">Сменить время суток</button>
+    </div>
+</section>
+
+</body>
+</html>

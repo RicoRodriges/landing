@@ -1,0 +1,306 @@
+<style>
+    .sky, .sea {
+        transition: background-color 2s;
+    }
+
+    .day .sky {
+        background-color: #B3EFFF;
+    }
+
+    .night .sky {
+        background-color: #73AFBF;
+    }
+
+    .day .sea {
+        background-color: #10739E;
+    }
+
+    .night .sea {
+        background-color: #00436E;
+    }
+
+
+    #sun, #cloud1, #cloud2, #moon, #stars {
+        transition: opacity 2s, top 2s, left 2s;
+        position: absolute;
+    }
+
+    .day #sun {
+        top: 20px;
+        left: 200px;
+        opacity: 1;
+    }
+
+    .night #sun {
+        top: 400px;
+        left: 400px;
+        opacity: 0;
+    }
+
+    .day #cloud1 {
+        top: 70px;
+        left: 280px;
+        opacity: 1;
+    }
+
+    .night #cloud1 {
+        top: 70px;
+        left: 400px;
+        opacity: 0;
+    }
+
+    .day #cloud2 {
+        top: 100px;
+        left: 110px;
+        opacity: 1;
+    }
+
+    .night #cloud2 {
+        top: 100px;
+        left: 0px;
+        opacity: 0;
+    }
+
+    .day #moon {
+        left: 100px;
+        top: 400px;
+        opacity: 0;
+    }
+
+    .night #moon {
+        left: 300px;
+        top: 50px;
+        opacity: 1;
+    }
+
+    .day #stars {
+        left: 100px;
+        top: 100px;
+        opacity: 0;
+    }
+
+    .night #stars {
+        left: 100px;
+        top: 30px;
+        opacity: 1;
+    }
+
+    .brightnessable {
+        transition: filter 2s;
+    }
+
+    .day .brightnessable {
+        filter: brightness(1);
+    }
+
+    .night .brightnessable {
+        filter: brightness(0.6);
+    }
+
+
+    @keyframes windmill-blade {
+        from {
+            transform: rotate(0);
+        }
+        to {
+            transform: rotate(360deg);
+        }
+    }
+
+    #windmill .blade-1 {
+        animation: windmill-blade 6s linear 0s infinite;
+    }
+
+    #windmill .blade-2 {
+        animation: windmill-blade 6s linear 2s infinite;
+    }
+
+    #windmill .blade-3 {
+        animation: windmill-blade 6s linear 4s infinite;
+    }
+
+    @keyframes reflection {
+        0% {
+            left: 40px;
+        }
+        25% {
+            left: 60px;
+        }
+        50% {
+            left: 40px;
+        }
+        75% {
+            left: 20px;
+        }
+    }
+
+    #reflection1, #reflection2, #reflection3 {
+        animation: reflection 6s linear infinite;
+    }
+
+    #reflection1, #reflection3 {
+        animation-direction: alternate;
+    }
+
+    #reflection2 {
+        animation-direction: alternate-reverse;
+    }
+</style>
+
+<div style="position:relative;width:100%;height:100%;" class="day">
+    <div class="sky" style="position:absolute;top:0;left:0;right:0;height:450px;">
+        <div style="position:relative;width:900px;height:100%;margin:0 auto;overflow:hidden;">
+            <svg id="sun" width="100px" viewBox="0 0 100 100">
+                <circle fill="#FFFFFF" cx="50" cy="50" r="50" opacity="0.1"/>
+                <circle fill="#FFFFFF" cx="50" cy="50" r="42" opacity="0.3"/>
+                <circle fill="#f9db5a" cx="50" cy="50" r="25" opacity="1.0"/>
+            </svg>
+            <svg id="cloud1" width="100px" viewBox="0 0 100 50">
+                <circle cx="60" cy="25" r="20" fill="#FFF"/>
+                <rect y="25" width="100" height="25" rx="20" fill="#FFF"/>
+            </svg>
+            <svg id="cloud2" width="100px" viewBox="0 0 100 50">
+                <circle cx="30" cy="25" r="20" fill="#FFF"/>
+                <circle cx="50" cy="30" r="20" fill="#FFF"/>
+                <rect y="25" width="100" height="25" rx="20" fill="#FFF"/>
+            </svg>
+            <svg id="moon" width="50px" viewBox="0 0 100 100">
+                <mask id="d54c0_mask">
+                    <circle cx="50" cy="50" r="50" fill="white"/>
+                    <circle cx="70" cy="40" r="50" fill="black"/>
+                </mask>
+
+                <circle cx="50" cy="50" r="50" mask="url(#d54c0_mask)" fill="#FFF"/>
+            </svg>
+            <svg id="stars" width="500px" viewBox="0 0 500 100">
+                <circle cx="50" cy="20" r="2" fill="#FFF"/>
+                <circle cx="100" cy="90" r="2" fill="#FFF"/>
+                <circle cx="310" cy="48" r="2" fill="#FFF"/>
+                <circle cx="400" cy="28" r="2" fill="#FFF"/>
+                <circle cx="450" cy="83" r="2" fill="#FFF"/>
+            </svg>
+
+            <div class="brightnessable" style="position:relative;width:100%;height:100%;">
+                <svg viewBox="0 0 100 100" style="display:none;">
+                    <defs>
+                        <g id="mountain">
+                            <polygon fill="#FFFFFF" points="39.5,30 65,30 50,0"/>
+                            <polygon fill="#9AA1AB" points="39.5,30 65,30 100,100 15,100"/>
+
+                            <polygon fill="#F0F0F0" points="35,30 39.5,30 50,0"/>
+                            <polygon fill="#888E96" points="35,30 39.5,30 15,100 0,100"/>
+                        </g>
+                        <g id="field">
+                            <defs>
+                                <circle id="ed7c86_fig" cx="50" cy="50" r="50"/>
+                                <clipPath id="ed7c86_clip">
+                                    <circle cx="30" cy="60" r="50"/>
+                                </clipPath>
+                            </defs>
+                            <use href="#ed7c86_fig" fill="#7FE6AB"/>
+                            <use href="#ed7c86_fig" fill="#6EC894" clip-path="url(#ed7c86_clip)"/>
+                        </g>
+                        <g id="windmill">
+                            <polygon fill="white" points="40,100 60,100 60,98 52,98 52,33 48,33 48,98 40,98"/>
+                            <circle fill="white" cx="50" cy="33" r="3"/>
+                            <polygon class="blade-1" fill="white" points="50,33 53,25 50,0 47,25"
+                                     transform-origin="50 33"/>
+                            <polygon class="blade-2" fill="white" points="50,33 53,25 50,0 47,25"
+                                     transform-origin="50 33"/>
+                            <polygon class="blade-3" fill="white" points="50,33 53,25 50,0 47,25"
+                                     transform-origin="50 33"/>
+                        </g>
+                        <g id="tree" viewBox="0 0 50 100">
+                            <polygon fill="green" points="20,100 30,100 30,80 50,80 25,0 0,80 20,80"/>
+                        </g>
+                    </defs>
+                </svg>
+
+                <svg width="200px" viewBox="0 0 100 100" style="position:absolute;top:180px;left:30px;">
+                    <use href="#mountain" width="100"/>
+                </svg>
+                <svg width="200px" viewBox="0 0 100 100" style="position:absolute;top:190px;left:110px;">
+                    <use href="#mountain" width="100"/>
+                </svg>
+                <svg width="180px" viewBox="0 0 100 100" style="position:absolute;top:160px;left:200px;">
+                    <use href="#mountain" width="100"/>
+                </svg>
+                <svg width="220px" viewBox="0 0 100 100" style="position:absolute;top:230px;left:240px;">
+                    <use href="#mountain" width="100"/>
+                </svg>
+                <svg viewBox="0 0 100 100" preserveAspectRatio="none"
+                     style="position:absolute;top:300px;left:0;width:450px;height:300px;">
+                    <use href="#field" width="100"/>
+                </svg>
+
+
+                <svg width="160px" viewBox="0 0 100 100" style="position:absolute;top:240px;left:420px;">
+                    <use href="#mountain" width="100"/>
+                </svg>
+                <svg width="180px" viewBox="0 0 100 100" style="position:absolute;top:180px;left:510px;">
+                    <use href="#mountain" width="100"/>
+                </svg>
+                <svg width="140px" viewBox="0 0 100 100" style="position:absolute;top:230px;left:630px;">
+                    <use href="#mountain" width="100"/>
+                </svg>
+                <svg viewBox="0 0 100 100" preserveAspectRatio="none"
+                     style="position:absolute;top:300px;left:400px;width:450px;height:300px;">
+                    <use href="#field" width="100"/>
+                </svg>
+
+
+                <svg width="100px" viewBox="0 0 100 100" style="position:absolute;top:330px;left:50px;">
+                    <use href="#windmill" width="100"/>
+                </svg>
+                <svg width="120px" viewBox="0 0 100 100" style="position:absolute;top:330px;left:110px;">
+                    <use href="#windmill" width="100"/>
+                </svg>
+                <svg width="110px" viewBox="0 0 100 100" style="position:absolute;top:300px;left:200px;">
+                    <use href="#windmill" width="100"/>
+                </svg>
+
+
+                <svg id="tree" width="20px" viewBox="0 0 50 100" style="position:absolute;top:400px;left:30px;">
+                    <use href="#tree" width="50"/>
+                </svg>
+                <svg width="30px" viewBox="0 0 50 100" style="position:absolute;top:380px;left:300px;">
+                    <use href="#tree" width="50"/>
+                </svg>
+                <svg width="24px" viewBox="0 0 50 100" style="position:absolute;top:330px;left:330px;">
+                    <use href="#tree" width="50"/>
+                </svg>
+                <svg width="25px" viewBox="0 0 50 100" style="position:absolute;top:400px;left:460px;">
+                    <use href="#tree" width="50"/>
+                </svg>
+                <svg width="15px" viewBox="0 0 50 100" style="position:absolute;top:360px;left:510px;">
+                    <use href="#tree" width="50"/>
+                </svg>
+                <svg width="20px" viewBox="0 0 50 100" style="position:absolute;top:380px;left:550px;">
+                    <use href="#tree" width="50"/>
+                </svg>
+                <svg width="30px" viewBox="0 0 50 100" style="position:absolute;top:350px;left:600px;">
+                    <use href="#tree" width="50"/>
+                </svg>
+                <svg width="25px" viewBox="0 0 50 100" style="position:absolute;top:390px;left:710px;">
+                    <use href="#tree" width="50"/>
+                </svg>
+            </div>
+        </div>
+    </div>
+    <div class="sea" style="position:absolute;top:450px;left:0;right:0;height:100%;">
+        <div style="position:relative;width:900px;height:100%;margin:0 auto;overflow:hidden;">
+            <div class="brightnessable" style="position:relative;width:100%;height:100%;">
+                <svg id="reflection1" width="800px" viewBox="0 0 800 30" style="position:absolute;top:0;left:50px;">
+                    <rect width="800" height="30" rx="15" fill="#5CCBD8"/>
+                </svg>
+                <svg id="reflection2" width="800px" viewBox="0 0 800 30" style="position:absolute;top:30px;left:50px;">
+                    <!-- <path d="M $x 0 l $w 0 a $h/2 $h/2 0 0 0 0 $h l -$w 0 a $h/2 $h/2 0 0 0 0 -$h" fill="black" stroke="black"/> -->
+                    <path d="M 266 0 l 266 0 a 15 15 0 0 0 0 30 l -266 0 a 15 15 0 0 0 0 -30" fill="#5CCBD8"/>
+                </svg>
+                <svg id="reflection3" width="800px" viewBox="0 0 800 30" style="position:absolute;top:60px;left:50px;">
+                    <rect x="100" width="600" height="30" rx="15" fill="#5CCBD8"/>
+                </svg>
+            </div>
+        </div>
+    </div>
+</div>

@@ -4,176 +4,123 @@ export default class Mask {
     w = 0;
     h = 0;
 
+    scaledW = 0;
+    scaledH = 0;
+    canvasW = 0;
+    canvasH = 0;
+    scale = 1;
+
     constructor(url: string) {
         const image = new Image();
-        // image.crossOrigin = "anonymous";
+        image.crossOrigin = 'anonymous';
         image.onload = this.onMaskLoaded.bind(this, image);
         image.src = url;
     }
 
-    isIntersect(x: number, y: number, w: number, h: number) {
+    updateScale(w: number, h: number) {
         if (!this.mask) {
             // mask isn't loaded yet
-            return true;
+            return;
         }
-        const normalizer = this.calcMaskPixelSize(w, h);
-        let offsetX, offsetY;
-        if (Math.abs(normalizer * this.w - w) > Math.abs(normalizer * this.h - h)) {
-            offsetX = Math.abs(normalizer * this.w - w) / 2;
+        this.canvasW = w;
+        this.canvasH = h;
+        this.scale = Math.min(w / this.w, h / this.h);
+        this.scaledW = this.w * this.scale;
+        this.scaledH = this.h * this.scale;
+    }
+
+    private toMaskPixelCoordinate(x: number, y: number): [number, number] {
+        let offsetX = Math.abs(this.scaledW - this.canvasW) / 2;
+        let offsetY = Math.abs(this.scaledH - this.canvasH) / 2;
+        if (offsetX > offsetY) {
             offsetY = 0;
         } else {
             offsetX = 0;
-            offsetY = Math.abs(normalizer * this.h - h) / 2;
         }
-        x = ((x - offsetX) / normalizer) | 0;
-        y = ((y - offsetY) / normalizer) | 0;
-        return this.read(x, y);
+
+        return [
+            ((x - offsetX) / this.scale) | 0,
+            ((y - offsetY) / this.scale) | 0,
+        ];
     }
 
-    isConnected(x1: number, y1: number, x2: number, y2: number, w: number, h: number) {
+    isIntersect(x: number, y: number) {
         if (!this.mask) {
             // mask isn't loaded yet
             return true;
         }
+        [x, y] = this.toMaskPixelCoordinate(x, y);
+        return this.read(x, y);
+    }
 
-        const pixelSize = this.calcMaskPixelSize(w, h);
+    isConnected(x1: number, y1: number, x2: number, y2: number) {
+        if (!this.mask) {
+            // mask isn't loaded yet
+            return true;
+        }
+        [x1, y1] = this.toMaskPixelCoordinate(x1, y1);
+        [x2, y2] = this.toMaskPixelCoordinate(x2, y2);
 
-        if (y1 == y2) {
-            // TODO: implement
-            return false;
+        if (x1 === x2) {
+            const yFrom = Math.min(y1, y2);
+            const yTo = Math.max(y1, y2);
+            for (let y = yFrom; y <= yTo; ++y) {
+                if (!this.read(x1, y)) return false;
+            }
+            return true;
         }
 
         // y = k*x + c
         const k = (y1 - y2) / (x1 - x2);
         const c = y1 - x1 * k;
-
-        const yStep = (y1 > y2) ? -pixelSize : pixelSize;
-        for (let y = y1; (yStep > 0) ? (y < y2 + yStep) : (y > y2 + yStep); y += yStep) {
-            const yNext = (yStep < 0) ? Math.max(y + yStep, y2) : Math.min(y + yStep, y2);
-            const xl = (y - c) / k;
-            const xr = (yNext - c) / k;
-
-            const yBorder = ((y / pixelSize) | 0) + 1;
-
-            const xBorder = yBorder * k + c;
-
-            const xStep = (xl > xr) ? -pixelSize : pixelSize;
-            if ((xStep >= 0 && xl >= xBorder && xr <= xBorder) || (xStep < 0 && xl <= xBorder && xr >= xBorder)) {
-                if (!this.isIntersect(xBorder - 1, (xBorder - 1) * k + c, w, h) || !this.isIntersect(xBorder + 1, (xBorder + 1) * k + c, w, h)) {
-                    return false;
-                }
+        if (Math.abs(k) >= 1) {
+            const yFrom = Math.min(y1, y2);
+            const yTo = Math.max(y1, y2);
+            for (let y = yFrom; y <= yTo; ++y) {
+                if (!this.read(((y - c) / k) | 0, y)) return false;
             }
-            for (let x = xl; (xStep > 0) ? (x < xr + xStep) : (x > xr + xStep); x += xStep) {
-                if (!this.isIntersect(x, x * k + c, w, h)) {
-                    return false;
-                }
+            return true;
+        } else {
+            const xFrom = Math.min(x1, x2);
+            const xTo = Math.max(x1, x2);
+            for (let x = xFrom; x <= xTo; ++x) {
+                if (!this.read(x, (k * x + c) | 0)) return false;
             }
+            return true;
         }
-        return true;
     }
-
-    // isConnected(x1: number, y1: number, x2: number, y2: number, w: number, h: number) {
-    //     if (!this.mask) {
-    //         // mask isn't loaded yet
-    //         return true;
-    //     }
-    //
-    //     if (x1 > x2) {
-    //         const temp = x1;
-    //         x1 = x2;
-    //         x2 = temp;
-    //     }
-    //     if (y1 > y2) {
-    //         const temp = y1;
-    //         y1 = y2;
-    //         y2 = temp;
-    //     }
-    //     const pixelSize = this.calcMaskPixelSize(w, h);
-    //
-    //     for (let y = (y1 - y1 % pixelSize) | 0; y < ((y2 - y2 % pixelSize + 1) | 0); y += pixelSize) {
-    //         for (let x = (x1 - x1 % pixelSize) | 0; x < ((x2 - x2 % pixelSize + 1) | 0); x += pixelSize) {
-    //             if (!this.isIntersect(x, y, w, h)) {
-    //                 return false;
-    //             }
-    //         }
-    //     }
-    //     return true;
-    // }
 
     private read(x: number, y: number): boolean {
         if (this.mask) {
             if (x < this.w && y < this.h && x >= 0 && y >= 0) {
-                const bitIndex = ((this.w * y) + x) | 0;
-                const byteIndex = (bitIndex / 8) | 0;
-                return (this.mask[byteIndex] & (1 << (bitIndex % 8))) != 0;
+                const index = this.w * y + x;
+                return this.mask[index] !== 0;
             }
             return false;
         }
         return true;
     }
 
-    // private readMany(xFrom: number, xTo: number, y: number): boolean {
-    //     if (this.mask) {
-    //
-    //         if (xFrom > xTo) {
-    //             const temp = xTo;
-    //             xFrom = xTo;
-    //             xTo = temp;
-    //         }
-    //
-    //         if (xFrom < this.w && y < this.h && xTo >= 0 && y >= 0) {
-    //             xFrom = Math.max(xFrom, 0);
-    //             xTo = Math.min(xTo, this.w - 1);
-    //
-    //             const indexFrom = ((this.w * y + xFrom) / 8) | 0;
-    //             const indexTo = ((this.w * y + xTo) / 8) | 0;
-    //             let bitStart = xFrom % 8;
-    //             let bitEnd = xTo % 8;
-    //             for (let i = indexFrom; i <= indexTo; ++i) {
-    //                 let mask = 0xFF;
-    //                 if (i == indexFrom || i == indexTo) {
-    //                     const byteFrom = (i == indexFrom) ? xFrom % 8 : 0;
-    //                     const byteTo = (i == indexTo) ? xTo % 8 : 7;
-    //                 }
-    //                 return (this.mask[i] & (1 << (bitIndex % 8))) != 0;
-    //             }
-    //         }
-    //         return false;
-    //     }
-    //     return true;
-    // }
-
     private write(x: number, y: number, val: boolean) {
-        if (this.mask && x < this.w && y < this.h) {
-            const bitIndex = ((this.w * y) + x) | 0;
-            const byteIndex = (bitIndex / 8) | 0;
-            if (val) {
-                this.mask[byteIndex] = this.mask[byteIndex] | (1 << (bitIndex % 8));
-            } else {
-                this.mask[byteIndex] = this.mask[byteIndex] & ~(1 << (bitIndex % 8));
-            }
+        if (this.mask) {
+            const index = this.w * y + x;
+            this.mask[index] = val ? 1 : 0;
         }
     }
 
-    private calcMaskPixelSize(w: number, h: number) {
-        const sizeW = w / this.w;
-        const sizeH = h / this.h;
-        return Math.min(sizeW, sizeH);
-    }
-
-
     private onMaskLoaded(img: HTMLImageElement) {
         const canvas = document.createElement('canvas');
-        this.w = canvas.width = img.width;
-        this.h = canvas.height = img.height;
-        const ctx = canvas.getContext("2d") as CanvasRenderingContext2D;
+        const w = this.w = canvas.width = img.width;
+        const h = this.h = canvas.height = img.height;
+        const ctx = canvas.getContext('2d') as CanvasRenderingContext2D;
         ctx.drawImage(img, 0, 0);
-        const imgData = ctx.getImageData(0, 0, canvas.width, canvas.height);
-        this.mask = new Int8Array(new ArrayBuffer((this.w * this.h) / 8 + 1));
-        for (let y = 0; y < imgData.height; ++y) {
-            for (let x = 0; x < imgData.width; ++x) {
-                const index = ((imgData.width * y) + x) * 4; // imgData.data
-                const val = imgData.data[index] > 0 || imgData.data[index + 1] > 0 || imgData.data[index + 2] > 0;
+        const imgData = ctx.getImageData(0, 0, w, h);
+        const rgba = new Uint32Array(imgData.data.buffer); // RGBA - UInt32 pixel
+
+        this.mask = new Int8Array(this.w * this.h);
+        for (let y = 0; y < h; ++y) {
+            for (let x = 0; x < w; ++x) {
+                const val = (rgba[(imgData.width * y) + x] & 0x00FFFFFF) > 0;
                 this.write(x, y, val);
             }
         }

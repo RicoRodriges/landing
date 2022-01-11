@@ -15,16 +15,13 @@ export default class Particle extends Point {
         const rad = Math.random() * Math.PI * 2;
         this.vx = Math.cos(rad) * 2;
         this.vy = Math.sin(rad) * 2;
-
     }
 
     update(w: number, h: number) {
         this.x += this.vx;
         this.y += this.vy;
 
-        let changeX = true,
-            changeY = true;
-
+        let changeX = true;
         if (this.x < 0)
             this.x = 0;
         else if (this.x > w)
@@ -34,6 +31,7 @@ export default class Particle extends Point {
         if (changeX)
             this.vx *= -1;
 
+        let changeY = true;
         if (this.y < 0)
             this.y = 0;
         else if (this.y > h)

@@ -15,13 +15,16 @@ export default class TownController {
 
     grid: TownObject[][][] = [];
 
-    gridWidth!: number;
-    gridHeight!: number;
+    readonly gridWidth: number;
+    readonly gridHeight: number;
     readonly gridSize = 200;
     readonly maxHeight = 600;
     readonly minHeight = 100;
 
-    heightFactor = 1; // 0.5 - all buildings are high, 2 - all buildings are low, ...
+    readonly heightFactor: number; // 0.5 - all buildings are high, 1 - middle, 2 - all buildings are low, ...
+    readonly roads: number;
+    readonly population: number;
+    readonly vegetation: number;
 
     vertexBuffer = new DataBuffer(1);
     indexBuffer = new IndexBuffer(1);
@@ -32,9 +35,19 @@ export default class TownController {
     cameraRotation = 0
     rotationSpeed = Math.PI / 1000
 
-    constructor(canvas: HTMLCanvasElement, bgColor: Color) {
+    paused = false;
+
+    constructor(canvas: HTMLCanvasElement, bgColor: Color, width: number, height: number, depth: number, roads: number,
+                population: number, vegetation: number) {
         this.el = canvas;
         this.bgColor = bgColor;
+        this.gridWidth = width;
+        this.gridHeight = depth;
+        this.heightFactor = 5 / height; // 1 - 10
+        this.roads = roads;
+        this.population = Math.min(population / 10, 1);
+        this.vegetation = Math.min(vegetation / 10, 1);
+
         this.initGLContext();
         this.generateGrid();
 
@@ -57,7 +70,6 @@ export default class TownController {
               gl_Position = u_worldProjectionMatrix * a_position;
               v_color = a_color;
               v_normal = mat3(u_worldMatrix) * a_normal;
-              // v_normal = a_normal;
             }
         `;
         const fragmentShaderCode = `
@@ -97,8 +109,8 @@ export default class TownController {
     }
 
     private generateGrid() {
-        this.gridWidth = Math.ceil(this.el.clientWidth / this.gridSize) + 3;
-        this.gridHeight = Math.ceil(this.el.clientHeight / this.gridSize) + 3;
+        // this.gridWidth = Math.ceil(this.el.clientWidth / this.gridSize) + 3;
+        // this.gridHeight = Math.ceil(this.el.clientHeight / this.gridSize) + 3;
 
         const randColor = () => PALLETS[Math.trunc(Math.random() * PALLETS.length)];
 
@@ -109,27 +121,55 @@ export default class TownController {
                 this.grid[x][y] = [];
 
                 // this.grid[x][y].push(new DebugFloor(this.gridSize));
-                const r = Math.random();
-                if (r >= 0.5) {
+                if (Math.random() <= this.population) {
                     this.grid[x][y].push(new House(this.gridSize, calcHeight(x, y, this.gridWidth, this.gridHeight, this.heightFactor, this.maxHeight, this.minHeight), randColor()));
-                } else if (r >= 0.3) {
+                } else if (Math.random() <= this.vegetation) {
                     this.grid[x][y].push(new Tree(this.gridSize));
                 }
             }
         }
 
-        const xRoad = Math.trunc(Math.random() * this.gridWidth);
-        const yRoad = Math.trunc(Math.random() * this.gridHeight);
-        for (let x = 0; x < this.gridWidth; ++x) {
-            this.grid[x][yRoad] = [new Road(this.gridSize, RoadDirection.X)];
+        const xRoads = new Set<number>();
+        const yRoads = new Set<number>();
+        for (let i = 0; i < this.roads; i += 2) {
+            const xOrig = Math.trunc(Math.random() * this.gridWidth);
+            for (let d = 0; d < this.gridWidth; ++d) {
+                const x = (xOrig + d) % this.gridWidth;
+                if (xRoads.has(x) || xRoads.has(x - 1) || xRoads.has(x + 1)) continue;
+                xRoads.add(x);
+                break;
+            }
         }
-        for (let y = 0; y < this.gridHeight; ++y) {
-            this.grid[xRoad][y] = [new Road(this.gridSize, RoadDirection.Y)];
+        for (let i = 1; i < this.roads; i += 2) {
+            const yOrig = Math.trunc(Math.random() * this.gridHeight);
+            for (let d = 0; d < this.gridHeight; ++d) {
+                const y = (yOrig + d) % this.gridHeight;
+                if (yRoads.has(y) || yRoads.has(y - 1) || yRoads.has(y + 1)) continue;
+                yRoads.add(y);
+                break;
+            }
         }
-        this.grid[xRoad][yRoad] = [new Road(this.gridSize, RoadDirection.LINK)];
+
+        for (const y of yRoads) {
+            for (let x = 0; x < this.gridWidth; ++x) {
+                this.grid[x][y] = [new Road(this.gridSize, RoadDirection.X)];
+            }
+        }
+        for (const x of xRoads) {
+            for (let y = 0; y < this.gridHeight; ++y) {
+                this.grid[x][y] = [new Road(this.gridSize, RoadDirection.Y)];
+            }
+        }
+        for (const y of yRoads) {
+            for (const x of xRoads) {
+                this.grid[x][y] = [new Road(this.gridSize, RoadDirection.LINK)];
+            }
+        }
     }
 
     private drawNextFrame() {
+        if (this.paused) return;
+
         window.requestAnimationFrame(this.drawNextFrame.bind(this));
 
         let triangles = 0;
@@ -216,5 +256,16 @@ export default class TownController {
         }
 
         this.glProg.drawElements(gl.TRIANGLES, this.indexBuffer.bytes / 2, gl.UNSIGNED_SHORT);
+    }
+
+    public set active(v: boolean) {
+        this.paused = !v;
+        if (!this.paused) {
+            this.drawNextFrame();
+        }
+    }
+
+    public detach() {
+        this.paused = true;
     }
 }

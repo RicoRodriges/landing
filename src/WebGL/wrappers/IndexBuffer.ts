@@ -44,6 +44,22 @@ export default class IndexBuffer extends AbstractBuffer {
         this.lastIndex = Math.max(this.lastIndex, i1, i2, i3);
     }
 
+    public write2Uint16(i1: number, i2: number) {
+        this.view.setUint16(this.size, i1, true);
+        this.size += 2;
+        this.view.setUint16(this.size, i2, true);
+        this.size += 2;
+
+        this.lastIndex = Math.max(this.lastIndex, i1, i2);
+    }
+
+    public write1Uint16(i1: number) {
+        this.view.setUint16(this.size, i1, true);
+        this.size += 2;
+
+        this.lastIndex = Math.max(this.lastIndex, i1);
+    }
+
     public get nextIndex() {
         return this.lastIndex + 1;
     }

@@ -10,6 +10,10 @@ export default class DataBuffer extends AbstractBuffer {
         return this.slice(Float32Array, start, length);
     }
 
+    public sliceUint16(start?: number, length?: number): Uint16Array {
+        return this.slice(Uint16Array, start, length);
+    }
+
     public write4Uint8(r: number, g: number, b: number, a: number) {
         this.view.setUint8(this.size, r);
         this.size += 1;
@@ -28,5 +32,12 @@ export default class DataBuffer extends AbstractBuffer {
         this.size += 4;
         this.view.setFloat32(this.size, z, true);
         this.size += 4;
+    }
+
+    public write2Uint16(x: number, y: number) {
+        this.view.setUint16(this.size, x, true);
+        this.size += 2;
+        this.view.setUint16(this.size, y, true);
+        this.size += 2;
     }
 }
