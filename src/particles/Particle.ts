@@ -1,6 +1,4 @@
-import {Point} from "./graphic-types";
-
-export default class Particle extends Point {
+export default class Particle {
     x: number;
     y: number;
 
@@ -8,7 +6,6 @@ export default class Particle extends Point {
     vy: number;
 
     constructor(w: number, h: number) {
-        super(0,0);
         this.x = Math.random() * w;
         this.y = Math.random() * h;
 
