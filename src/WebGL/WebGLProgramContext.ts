@@ -1,10 +1,10 @@
 import {createProgramFromScripts} from "./WebGLUtil";
 
 export default class WebGLProgramContext {
-    gl: WebGLRenderingContext;
-    prog: WebGLProgram;
-    attrs = new Map<string, number>();
-    uniforms = new Map<String, WebGLUniformLocation>();
+    readonly gl: WebGLRenderingContext;
+    protected prog: WebGLProgram;
+    protected attrs = new Map<string, number>();
+    protected uniforms = new Map<String, WebGLUniformLocation>();
 
     public constructor(el: HTMLCanvasElement,
                        vertexShader: string,

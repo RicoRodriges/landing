@@ -2,19 +2,32 @@ import {
     Cuboid,
     Plane45deg,
     PlaneRotate,
-    PrimitiveInfo, Pyramid, rotateZ180,
+    PrimitiveInfo,
+    Pyramid,
+    rotateZ180,
     translate,
     Triangle,
-    XYPlane, XZPlane,
+    XYPlane,
+    XZPlane,
     YZPlane
 } from "../WebGL/Primitives";
 import DataBuffer from "../WebGL/wrappers/DataBuffer";
 import IndexBuffer from "../WebGL/wrappers/IndexBuffer";
 
 export abstract class TownObject {
-    abstract getTriangleCount(): number;
+    getTriangleCount() {
+        return 0;
+    }
 
-    abstract writeObject(vertexes: DataBuffer, indexes: IndexBuffer): void;
+    writeObject(vertexes: DataBuffer, indexes: IndexBuffer) {
+    }
+
+    getDynamicTriangleCount() {
+        return 0;
+    }
+
+    writeDynamicObject(vertexes: DataBuffer, indexes: IndexBuffer) {
+    }
 
     frameUpdate() {
     }
@@ -47,6 +60,20 @@ export class House extends TownObject {
         this.roof?.frameUpdate();
         this.windows.frameUpdate();
         this.antenna?.frameUpdate();
+    }
+
+    getDynamicTriangleCount() {
+        return super.getDynamicTriangleCount() +
+            (this.roof?.getDynamicTriangleCount() || 0) +
+            this.windows.getDynamicTriangleCount() +
+            (this.antenna?.getDynamicTriangleCount() || 0);
+    }
+
+    writeDynamicObject(vertexes: DataBuffer, indexes: IndexBuffer) {
+        super.writeDynamicObject(vertexes, indexes);
+        this.roof?.writeDynamicObject(vertexes, indexes);
+        this.windows.writeDynamicObject(vertexes, indexes);
+        this.antenna?.writeDynamicObject(vertexes, indexes);
     }
 
     public width: number;
@@ -199,11 +226,11 @@ export class Windows extends TownObject {
         }
     }
 
-    getTriangleCount(): number {
+    getDynamicTriangleCount(): number {
         return (this.windowsY + this.windowsX) * 2 * this.windowsZ * 2;
     }
 
-    writeObject(vertexes: DataBuffer, indexes: IndexBuffer) {
+    writeDynamicObject(vertexes: DataBuffer, indexes: IndexBuffer) {
         const zWindowSize = Windows.windowHeight + 2 * Windows.offset;
         const zOffset = (this.height - this.windowsZ * zWindowSize) / 2;
 

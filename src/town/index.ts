@@ -28,9 +28,13 @@ export default class TownController {
 
     vertexBuffer = new DataBuffer(1);
     indexBuffer = new IndexBuffer(1);
+    staticTriangles = 0;
 
     glVertexBuffer!: WebGLBuffer;
     glIndexBuffer!: WebGLBuffer;
+
+    glDynamicVertexBuffer!: WebGLBuffer;
+    glDynamicIndexBuffer!: WebGLBuffer;
 
     cameraRotation = 0
     rotationSpeed = Math.PI / 1000
@@ -50,6 +54,7 @@ export default class TownController {
 
         this.initGLContext();
         this.generateGrid();
+        this.fillStaticBuffers();
 
         this.drawNextFrame();
     }
@@ -106,6 +111,8 @@ export default class TownController {
 
         this.glVertexBuffer = this.glProg.createBuffer()!;
         this.glIndexBuffer = this.glProg.createBuffer()!;
+        this.glDynamicVertexBuffer = this.glProg.createBuffer()!;
+        this.glDynamicIndexBuffer = this.glProg.createBuffer()!;
     }
 
     private generateGrid() {
@@ -167,45 +174,83 @@ export default class TownController {
         }
     }
 
+    private static reserveBuffers(vertex: DataBuffer, index: IndexBuffer, triangles: number) {
+        // approximated values
+        // triangle = 3 vertexes * (xyz + normal + rgba)
+        vertex.reserveAndClean(triangles * 3 * (3 * Float32Array.BYTES_PER_ELEMENT + 3 * Float32Array.BYTES_PER_ELEMENT + 4));
+        // triangle = 3 vertexes indexes
+        index.reserveAndClean(triangles * 3 * Uint16Array.BYTES_PER_ELEMENT);
+    }
+
+    private static bindArrayBuffer(glProg: WebGLProgramContext, buf: WebGLBuffer, vertex?: DataBuffer) {
+        const gl = glProg.gl;
+        const FLOAT_SIZE = Float32Array.BYTES_PER_ELEMENT;
+        glProg.arrayBuffer(buf, 6 * FLOAT_SIZE + 4, {
+            a_position: {elems: 3, elType: gl.FLOAT, normalized: false, offsetBytes: 0},
+            a_normal: {elems: 3, elType: gl.FLOAT, normalized: false, offsetBytes: 3 * FLOAT_SIZE},
+            a_color: {elems: 4, elType: gl.UNSIGNED_BYTE, normalized: true, offsetBytes: 6 * FLOAT_SIZE},
+        }, vertex?.sliceFloat32());
+    }
+
+    private static bindIndexBuffer(glProg: WebGLProgramContext, buf: WebGLBuffer, index?: IndexBuffer) {
+        glProg.indexBuffer(buf, index?.sliceUint16());
+    }
+
+    private static writeBuffers(vertex: DataBuffer, index: IndexBuffer, grid: TownObject[][][], gridSize: number,
+                                 draw: (o: TownObject, v: DataBuffer, i: IndexBuffer) => void) {
+        grid.forEach((gridY, x) =>
+            gridY.forEach((objs, y) => {
+
+                const oldOffset = vertex.bytes;
+                objs.forEach((o) => draw(o, vertex, index));
+
+                // update X and Y offsets
+                if (vertex.bytes > oldOffset) {
+                    // buffer was changed
+                    const slice = vertex.sliceFloat32(oldOffset);
+                    for (let i = 0; i < slice.length; i += 7) {
+                        slice[i + 0] += gridSize * x;
+                        slice[i + 1] += gridSize * y;
+                    }
+                }
+            })
+        );
+    }
+
+    private fillStaticBuffers() {
+        const triangles = this.grid
+            .flatMap(x => x)
+            .flatMap(x => x)
+            .reduce((p, obj) => p + obj.getTriangleCount(), 0);
+
+        TownController.reserveBuffers(this.vertexBuffer, this.indexBuffer, triangles);
+        TownController.writeBuffers(this.vertexBuffer, this.indexBuffer, this.grid, this.gridSize,
+            (o, v, i) => o.writeObject(v, i));
+
+        this.glProg.useProgram();
+        TownController.bindArrayBuffer(this.glProg, this.glVertexBuffer, this.vertexBuffer);
+        TownController.bindIndexBuffer(this.glProg, this.glIndexBuffer, this.indexBuffer);
+        this.staticTriangles = this.indexBuffer.bytes / 2;
+    }
+
     private drawNextFrame() {
         if (this.paused) return;
 
         window.requestAnimationFrame(this.drawNextFrame.bind(this));
 
         let triangles = 0;
-        this.grid.forEach((gridY, x) =>
-            gridY.forEach((objs, y) =>
+        this.grid.forEach((gridY) =>
+            gridY.forEach((objs) =>
                 objs.forEach((o) => {
                     o.frameUpdate();
-                    triangles += o.getTriangleCount();
+                    triangles += o.getDynamicTriangleCount();
                 })
             )
         );
 
-        // approximated values
-        // triangle = 3 vertexes * (xyz + normal + rgba)
-        this.vertexBuffer.reserveAndClean(triangles * 3 * (3 * Float32Array.BYTES_PER_ELEMENT + 3 * Float32Array.BYTES_PER_ELEMENT + 4));
-        // triangle = 3 vertexes indexes
-        this.indexBuffer.reserveAndClean(triangles * 3 * Uint16Array.BYTES_PER_ELEMENT);
-
-        this.grid.forEach((gridY, x) =>
-            gridY.forEach((objs, y) => {
-
-                const oldOffset = this.vertexBuffer.bytes;
-                objs.forEach((o) => {
-                    o.writeObject(this.vertexBuffer, this.indexBuffer);
-                });
-
-                // update X and Y offsets
-                if (this.vertexBuffer.bytes > oldOffset) {
-                    const slice = this.vertexBuffer.sliceFloat32(oldOffset);
-                    for (let i = 0; i < slice.length; i += 7) {
-                        slice[i + 0] += this.gridSize * x;
-                        slice[i + 1] += this.gridSize * y;
-                    }
-                }
-            })
-        );
+        TownController.reserveBuffers(this.vertexBuffer, this.indexBuffer, triangles);
+        TownController.writeBuffers(this.vertexBuffer, this.indexBuffer, this.grid, this.gridSize,
+            (o, v, i) => o.writeDynamicObject(v, i));
 
         const gl = this.glProg.gl;
         resizeContext(gl);
@@ -213,15 +258,6 @@ export default class TownController {
         gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
 
         this.glProg.useProgram();
-
-        const FLOAT_SIZE = Float32Array.BYTES_PER_ELEMENT;
-        this.glProg.arrayBuffer(this.glVertexBuffer, 6 * FLOAT_SIZE + 4, {
-            a_position: {elems: 3, elType: gl.FLOAT, normalized: false, offsetBytes: 0},
-            a_normal: {elems: 3, elType: gl.FLOAT, normalized: false, offsetBytes: 3 * FLOAT_SIZE},
-            a_color: {elems: 4, elType: gl.UNSIGNED_BYTE, normalized: true, offsetBytes: 6 * FLOAT_SIZE},
-        }, this.vertexBuffer.sliceFloat32());
-
-        this.glProg.indexBuffer(this.glIndexBuffer, this.indexBuffer.sliceUint16());
 
         {
             this.cameraRotation -= this.rotationSpeed;
@@ -255,6 +291,12 @@ export default class TownController {
             this.glProg.uniformVector('u_lightDirection', -0.2, -0.5, -1);
         }
 
+        TownController.bindArrayBuffer(this.glProg, this.glVertexBuffer);
+        TownController.bindIndexBuffer(this.glProg, this.glIndexBuffer);
+        this.glProg.drawElements(gl.TRIANGLES, this.staticTriangles, gl.UNSIGNED_SHORT);
+
+        TownController.bindArrayBuffer(this.glProg, this.glDynamicVertexBuffer, this.vertexBuffer);
+        TownController.bindIndexBuffer(this.glProg, this.glDynamicIndexBuffer, this.indexBuffer);
         this.glProg.drawElements(gl.TRIANGLES, this.indexBuffer.bytes / 2, gl.UNSIGNED_SHORT);
     }
 
