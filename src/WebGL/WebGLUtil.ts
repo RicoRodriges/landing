@@ -54,7 +54,7 @@ export function deleteProgram(gl: WebGLRenderingContext, program: WebGLProgram) 
 // Canvas operations
 // ---------------------------
 export function resizeContext(gl: WebGLRenderingContext) {
-    const canvas = gl.canvas as HTMLCanvasElement;
+    const canvas = gl.canvas;
 
     const dpr = window.devicePixelRatio;
     const displayWidth = Math.round(canvas.clientWidth * dpr);
@@ -68,4 +68,15 @@ export function resizeContext(gl: WebGLRenderingContext) {
 
         gl.viewport(0, 0, displayWidth, displayHeight);
     }
+}
+
+export function isVisible(gl: WebGLRenderingContext) {
+    const canvas = gl.canvas;
+
+    const rect = canvas.getBoundingClientRect();
+    const top = rect.top;
+    const bottom = rect.bottom;
+
+    const height = window.innerHeight;
+    return bottom > 0 && top < height;
 }

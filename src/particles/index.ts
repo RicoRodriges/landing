@@ -1,6 +1,6 @@
 import Particle from "./Particle";
 import Mask from "./Mask";
-import {resizeContext} from "../WebGL/WebGLUtil";
+import {isVisible, resizeContext} from "../WebGL/WebGLUtil";
 import WebGLProgramContext from "../WebGL/WebGLProgramContext";
 import DataBuffer from "../WebGL/wrappers/DataBuffer";
 import IndexBuffer from "../WebGL/wrappers/IndexBuffer";
@@ -20,8 +20,6 @@ export default class ParticleController {
     springConst = .000025;
 
     mask: Mask | undefined;
-
-    paused = false;
 
     constructor(el: HTMLCanvasElement, particles: number, mask: Mask | undefined = undefined) {
         this.el = el;
@@ -98,11 +96,10 @@ export default class ParticleController {
     }
 
     private drawNextFrame() {
-        if (this.paused) return;
-
         window.requestAnimationFrame(this.drawNextFrame.bind(this));
 
         const gl = this.lineProg.gl;
+        if (!isVisible(gl)) return;
         resizeContext(gl);
         const w = this.lineProg.width;
         const h = this.lineProg.height;
@@ -149,7 +146,7 @@ export default class ParticleController {
                     p2.vx += dx * this.springConst;
                     p2.vy += dy * this.springConst;
 
-                    const lineWidth = (1 - dSquare / minSquareDist) * 2;
+                    // const lineWidth = (1 - dSquare / minSquareDist) * 2;
                     this.indexBuffer.write2Uint16(i, j);
                     // lines.push(new Line(p1.x, p1.y, p2.x, p2.y, lineWidth));
                 }
@@ -180,12 +177,5 @@ export default class ParticleController {
         this.pointProg.indexBuffer(this.glIndexBuffer, this.indexBuffer.sliceUint16());
         this.pointProg.uniformVector('u_resolution', w, h);
         this.pointProg.drawElements(gl.POINTS, this.indexBuffer.bytes / 2, gl.UNSIGNED_SHORT);
-    }
-
-    public set active(v: boolean) {
-        this.paused = !v;
-        if (!this.paused) {
-            this.drawNextFrame();
-        }
     }
 }

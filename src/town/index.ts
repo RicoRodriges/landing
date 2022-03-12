@@ -1,4 +1,4 @@
-import {resizeContext} from "../WebGL/WebGLUtil";
+import {isVisible, resizeContext} from "../WebGL/WebGLUtil";
 import {calcHeight, Color, DebugFloor, House, PALLETS, Road, RoadDirection, TownObject, Tree} from "./town-objects";
 import Matrix4 from "../WebGL/Matrix4";
 import DataBuffer from "../WebGL/wrappers/DataBuffer";
@@ -238,6 +238,12 @@ export default class TownController {
 
         window.requestAnimationFrame(this.drawNextFrame.bind(this));
 
+        const gl = this.glProg.gl;
+        if (!isVisible(gl)) return;
+        resizeContext(gl);
+        gl.clearColor(this.bgColor.r, this.bgColor.g, this.bgColor.b, this.bgColor.a);
+        gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
+
         let triangles = 0;
         this.grid.forEach((gridY) =>
             gridY.forEach((objs) =>
@@ -251,11 +257,6 @@ export default class TownController {
         TownController.reserveBuffers(this.vertexBuffer, this.indexBuffer, triangles);
         TownController.writeBuffers(this.vertexBuffer, this.indexBuffer, this.grid, this.gridSize,
             (o, v, i) => o.writeDynamicObject(v, i));
-
-        const gl = this.glProg.gl;
-        resizeContext(gl);
-        gl.clearColor(this.bgColor.r, this.bgColor.g, this.bgColor.b, this.bgColor.a);
-        gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
 
         this.glProg.useProgram();
 
@@ -300,14 +301,12 @@ export default class TownController {
         this.glProg.drawElements(gl.TRIANGLES, this.indexBuffer.bytes / 2, gl.UNSIGNED_SHORT);
     }
 
-    public set active(v: boolean) {
-        this.paused = !v;
-        if (!this.paused) {
-            this.drawNextFrame();
-        }
-    }
-
     public detach() {
         this.paused = true;
+        this.glProg.deleteBuffer(this.glVertexBuffer);
+        this.glProg.deleteBuffer(this.glIndexBuffer);
+        this.glProg.deleteBuffer(this.glDynamicVertexBuffer);
+        this.glProg.deleteBuffer(this.glDynamicIndexBuffer);
+        this.glProg.destroyProgram();
     }
 }

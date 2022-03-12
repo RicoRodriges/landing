@@ -96,6 +96,14 @@ export default class WebGLProgramContext {
         return this.gl.createBuffer();
     }
 
+    public deleteBuffer(buf: WebGLBuffer) {
+        this.gl.deleteBuffer(buf);
+    }
+
+    public destroyProgram() {
+        this.gl.deleteProgram(this.prog);
+    }
+
     public get width() {
         return this.gl.canvas.clientWidth;
     }

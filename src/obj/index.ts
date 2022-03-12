@@ -3,7 +3,7 @@ import {Material, parseMTL} from "../WebGL/parsers/mtl";
 import WebGLProgramContext from "../WebGL/WebGLProgramContext";
 import DataBuffer from "../WebGL/wrappers/DataBuffer";
 import IndexBuffer from "../WebGL/wrappers/IndexBuffer";
-import {resizeContext} from "../WebGL/WebGLUtil";
+import {isVisible, resizeContext} from "../WebGL/WebGLUtil";
 import Matrix4 from "../WebGL/Matrix4";
 
 export async function loadObjFile(url: string): Promise<OBJ> {
@@ -39,8 +39,6 @@ export default class ObjController {
     objCoordRange: { min: [number, number, number], max: [number, number, number] };
     cameraRotation = 0
     rotationSpeed = Math.PI / 200
-
-    paused = false;
 
     constructor(el: HTMLCanvasElement, obj: OBJ, mtl: Map<string, Material>,
                 pointSize: number, backgroundColor: [number, number, number]) {
@@ -282,11 +280,10 @@ export default class ObjController {
     }
 
     private drawNextFrame() {
-        if (this.paused) return;
-
         window.requestAnimationFrame(this.drawNextFrame.bind(this));
 
         const gl = this.progs.values().next().value.gl;
+        if (!isVisible(gl)) return;
         resizeContext(gl);
         gl.clearColor(...this.background);
         gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
@@ -360,12 +357,5 @@ export default class ObjController {
 
     public setProperty(objName: string, p: ProgType) {
         this.prop.set(objName, p);
-    }
-
-    public set active(v: boolean) {
-        this.paused = !v;
-        if (!this.paused) {
-            this.drawNextFrame();
-        }
     }
 }
