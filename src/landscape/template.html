@@ -97,28 +97,6 @@
         filter: brightness(0.6);
     }
 
-
-    @keyframes windmill-blade {
-        from {
-            transform: rotate(0);
-        }
-        to {
-            transform: rotate(360deg);
-        }
-    }
-
-    #windmill .blade-1 {
-        animation: windmill-blade 6s linear 0s infinite;
-    }
-
-    #windmill .blade-2 {
-        animation: windmill-blade 6s linear 2s infinite;
-    }
-
-    #windmill .blade-3 {
-        animation: windmill-blade 6s linear 4s infinite;
-    }
-
     @keyframes reflection {
         0% {
             left: 40px;
@@ -203,12 +181,15 @@
                         <g id="windmill">
                             <polygon fill="white" points="40,100 60,100 60,98 52,98 52,33 48,33 48,98 40,98"/>
                             <circle fill="white" cx="50" cy="33" r="3"/>
-                            <polygon class="blade-1" fill="white" points="50,33 53,25 50,0 47,25"
-                                     transform-origin="50 33"/>
-                            <polygon class="blade-2" fill="white" points="50,33 53,25 50,0 47,25"
-                                     transform-origin="50 33"/>
-                            <polygon class="blade-3" fill="white" points="50,33 53,25 50,0 47,25"
-                                     transform-origin="50 33"/>
+                            <polygon fill="white" points="50,33 53,25 50,0 47,25" transform-origin="50 33">
+                                <animateTransform attributeName="transform" type="rotate" begin="0s" from="0" to="360" dur="6s" repeatCount="indefinite" />
+                            </polygon>
+                            <polygon fill="white" points="50,33 53,25 50,0 47,25" transform-origin="50 33">
+                                <animateTransform attributeName="transform" type="rotate" begin="2s" from="0" to="360" dur="6s" repeatCount="indefinite" />
+                            </polygon>
+                            <polygon fill="white" points="50,33 53,25 50,0 47,25" transform-origin="50 33">
+                                <animateTransform attributeName="transform" type="rotate" begin="4s" from="0" to="360" dur="6s" repeatCount="indefinite" />
+                            </polygon>
                         </g>
                         <g id="tree" viewBox="0 0 50 100">
                             <polygon fill="green" points="20,100 30,100 30,80 50,80 25,0 0,80 20,80"/>
