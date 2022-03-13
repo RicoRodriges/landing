@@ -1,4 +1,4 @@
-import {resizeContext} from "../WebGL/WebGLUtil";
+import {isVisible, resizeContext} from "../WebGL/WebGLUtil";
 import WebGLProgramContext from "../WebGL/WebGLProgramContext";
 import DataBuffer from "../WebGL/wrappers/DataBuffer";
 import IndexBuffer from "../WebGL/wrappers/IndexBuffer";
@@ -12,6 +12,8 @@ export default class SnakeController {
     static readonly width = 10;
     static readonly height = 20;
     static readonly fill = 0.4;
+    static readonly speed_max = 100;
+    static readonly speed_delta = 30;
 
     el: HTMLCanvasElement;
     prog!: WebGLProgramContext;
@@ -25,8 +27,7 @@ export default class SnakeController {
     snake!: Snake;
     apple!: [number, number];
     direction!: Direction;
-
-    speed = 500; // ms
+    speed!: number; // ms
 
     constructor(el: HTMLCanvasElement) {
         this.el = el;
@@ -140,6 +141,7 @@ export default class SnakeController {
         this.snake = new Snake(Math.round(SnakeController.width / 2), Math.round(SnakeController.height / 2));
         this.direction = Direction.UP;
         this.apple = SnakeController.randomApple(this.snake);
+        this.speed = 500;
     }
 
     private updateGameField() {
@@ -147,6 +149,7 @@ export default class SnakeController {
         if (next[0] === this.apple[0] && next[1] === this.apple[1]) {
             this.snake.add(next[0], next[1]);
             this.apple = SnakeController.randomApple(this.snake);
+            this.speed = Math.max(SnakeController.speed_max, this.speed - SnakeController.speed_delta);
         } else if (this.snake.isSnake(...next, true)) {
             this.initGameField();
         } else {
@@ -216,5 +219,9 @@ export default class SnakeController {
         if (!this.snake.isSnake(...next, true)) {
             this.direction = d;
         }
+    }
+
+    public get visible() {
+        return isVisible(this.prog.gl);
     }
 }

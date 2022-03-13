@@ -213,4 +213,20 @@ import SnakeController, {Direction} from "./snake";
     controlButton('left', Direction.LEFT);
     controlButton('down', Direction.DOWN);
     controlButton('right', Direction.RIGHT);
+
+    const keyControl = {
+        'ArrowUp': Direction.UP,
+        'ArrowLeft': Direction.LEFT,
+        'ArrowDown': Direction.DOWN,
+        'ArrowRight': Direction.RIGHT,
+    };
+    document.addEventListener('keydown', e => {
+        if (!snakeGame.visible) return;
+        for (const [key, direction] of Object.entries(keyControl)) {
+            if (e.key === key) {
+                e.preventDefault();
+                snakeGame.setDirection(direction);
+            }
+        }
+    });
 })();
