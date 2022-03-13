@@ -6,6 +6,7 @@ import {getState, setState, State} from "./landscape";
 import ObjController, {loadMtlFile, loadObjFile, ProgType} from "./obj";
 import OBJ from "./WebGL/parsers/obj";
 import {Material} from "./WebGL/parsers/mtl";
+import SnakeController, {Direction} from "./snake";
 
 (function () {
     const particleSection = document.getElementById('particles')!;
@@ -196,4 +197,20 @@ import {Material} from "./WebGL/parsers/mtl";
         }
         //console.log(obj.objectNames);
     });
+})();
+
+(function () {
+    const snakeSection = document.getElementById('snake')!;
+    const canvas = snakeSection.querySelector('canvas')!;
+
+    const snakeGame = new SnakeController(canvas);
+
+    const controlButton = (name: string, direction: Direction) => {
+        const button = snakeSection.querySelector<HTMLButtonElement>(`button[name=${name}]`)!;
+        button.addEventListener('click', () => snakeGame.setDirection(direction));
+    }
+    controlButton('up', Direction.UP);
+    controlButton('left', Direction.LEFT);
+    controlButton('down', Direction.DOWN);
+    controlButton('right', Direction.RIGHT);
 })();

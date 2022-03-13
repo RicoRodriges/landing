@@ -1,0 +1,48 @@
+<?xml version="1.0" encoding="utf-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" viewBox="0 0 20 200">
+    <defs>
+        <g id="block">
+            <rect x="0" y="0" width="10" height="10" fill="transparent" stroke="black" stroke-width="1" />
+            <rect x="2" y="2" width="6" height="6" fill="black" stroke="transparent" />
+        </g>
+    </defs>
+
+    <g>
+        <use xlink:href="#block" x="0" y="0"/>
+        <use xlink:href="#block" x="0" y="10"/>
+        <use xlink:href="#block" x="10" y="10"/>
+        <use xlink:href="#block" x="0" y="20"/>
+    </g>
+    <g>
+        <use xlink:href="#block" x="0" y="35"/>
+        <use xlink:href="#block" x="0" y="45"/>
+        <use xlink:href="#block" x="10" y="45"/>
+        <use xlink:href="#block" x="10" y="55"/>
+    </g>
+    <g>
+        <use xlink:href="#block" x="0" y="70"/>
+        <use xlink:href="#block" x="10" y="70"/>
+        <use xlink:href="#block" x="0" y="80"/>
+        <use xlink:href="#block" x="0" y="90"/>
+    </g>
+    <g>
+        <use xlink:href="#block" x="0" y="105"/>
+        <use xlink:href="#block" x="10" y="105"/>
+        <use xlink:href="#block" x="0" y="115"/>
+        <use xlink:href="#block" x="10" y="115"/>
+    </g>
+    <g>
+        <use xlink:href="#block" x="10" y="130"/>
+        <use xlink:href="#block" x="10" y="140"/>
+        <use xlink:href="#block" x="10" y="150"/>
+        <use xlink:href="#block" x="10" y="160"/>
+    </g>
+
+    <g>
+        <use xlink:href="#block" x="0" y="175"/>
+        <use xlink:href="#block" x="10" y="175"/>
+        <use xlink:href="#block" x="0" y="185"/>
+        <use xlink:href="#block" x="10" y="185"/>
+    </g>
+
+</svg>

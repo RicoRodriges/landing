@@ -34,6 +34,13 @@ export default class DataBuffer extends AbstractBuffer {
         this.size += 4;
     }
 
+    public write2Float32(x: number, y: number) {
+        this.view.setFloat32(this.size, x, true);
+        this.size += 4;
+        this.view.setFloat32(this.size, y, true);
+        this.size += 4;
+    }
+
     public write2Uint16(x: number, y: number) {
         this.view.setUint16(this.size, x, true);
         this.size += 2;
