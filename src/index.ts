@@ -7,6 +7,7 @@ import ObjController, {loadMtlFile, loadObjFile, ProgType} from "./obj";
 import OBJ from "./WebGL/parsers/obj";
 import {Material} from "./WebGL/parsers/mtl";
 import SnakeController, {Direction} from "./snake";
+import LogoController from "./logo";
 
 (function () {
     const particleSection = document.getElementById('particles')!;
@@ -229,4 +230,18 @@ import SnakeController, {Direction} from "./snake";
             }
         }
     });
+})();
+
+(function () {
+    const logoSection = document.getElementById('logo')!;
+    const canvas = logoSection.querySelector('canvas')!;
+
+    const onResize = () => {
+        canvas.width = window.innerWidth;
+        canvas.height = window.innerHeight;
+    };
+    onResize();
+    window.addEventListener('resize', onResize);
+
+    const dvd = new LogoController(canvas, 'public/logo.svg');
 })();

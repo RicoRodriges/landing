@@ -165,17 +165,11 @@ export default class ParticleController {
         this.lineProg.drawElements(gl.LINES, this.indexBuffer.bytes / 2, gl.UNSIGNED_SHORT);
 
 
-        this.indexBuffer.clean();
-        for (let i = 0; i < this.particles.length; ++i) {
-            this.indexBuffer.write1Uint16(i);
-        }
-
         this.pointProg.useProgram();
         this.pointProg.arrayBuffer(this.glVertexBuffer, Uint16Array.BYTES_PER_ELEMENT * 2, {
             a_position: {elems: 2, elType: gl.UNSIGNED_SHORT, normalized: false, offsetBytes: 0},
         });
-        this.pointProg.indexBuffer(this.glIndexBuffer, this.indexBuffer.sliceUint16());
         this.pointProg.uniformVector('u_resolution', w, h);
-        this.pointProg.drawElements(gl.POINTS, this.indexBuffer.bytes / 2, gl.UNSIGNED_SHORT);
+        this.pointProg.drawArrays(gl.POINTS, this.particles.length);
     }
 }

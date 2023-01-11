@@ -41,6 +41,18 @@ export default class DataBuffer extends AbstractBuffer {
         this.size += 4;
     }
 
+    public write1Uint8(v: number) {
+        this.view.setUint8(this.size, v);
+        this.size += 1;
+    }
+
+    public write2Uint8(x: number, y: number) {
+        this.view.setUint8(this.size, x);
+        this.size += 1;
+        this.view.setUint8(this.size, y);
+        this.size += 1;
+    }
+
     public write2Uint16(x: number, y: number) {
         this.view.setUint16(this.size, x, true);
         this.size += 2;
