@@ -228,5 +228,48 @@
     </div>
 </section>
 
+<section id="maze" class="with-background">
+    <div class="background-container">
+        <canvas class="background fill-screen"></canvas>
+    </div>
+    <div class="fill-screen middle-container">
+        <h2 class="center-content center-text canvas-text">
+            Автоматизационные решения
+        </h2>
+        <p class="center-content center-text canvas-text">
+            Все наши решения работают как в полностью автоматическом режиме, так и в ручном.
+        </p>
+    </div>
+    <div class="fill-screen middle-container">
+        <div style="padding:1rem;margin:1rem;border-radius:1rem;border:black solid;">
+            <div>
+                <button class="canvas-text" name="mode"></button>
+            </div>
+            <div class="center-text">
+                <button class="canvas-text" name="left">←</button>
+                <button class="canvas-text" name="up">↑</button>
+                <button class="canvas-text" name="right">→</button>
+            </div>
+        </div>
+        <div style="padding:1rem;margin:1rem;border-radius:1rem;border:black solid;">
+            <table class="center-content canvas-text">
+                <tr>
+                    <td>Ширина:</td>
+                    <td><input type="range" name="width" min="1" max="10" step="1"> <span></span></td>
+                </tr>
+                <tr>
+                    <td>Глубина:</td>
+                    <td><input type="range" name="depth" min="1" max="10" step="1"> <span></span></td>
+                </tr>
+                <tr>
+                    <td colspan="2" class="center-text">
+                        <button class="canvas-text" name="generate">Сгенерировать новый</button>
+                    </td>
+                </tr>
+            </table>
+        </div>
+    </div>
+</section>
+
 </body>
 </html>

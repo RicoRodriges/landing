@@ -8,6 +8,8 @@ import OBJ from "./WebGL/parsers/obj";
 import {Material} from "./WebGL/parsers/mtl";
 import SnakeController, {Direction} from "./snake";
 import LogoController from "./logo";
+import MazeController from "./maze";
+import { Action } from "./maze/Action";
 
 (function () {
     const particleSection = document.getElementById('particles')!;
@@ -244,4 +246,68 @@ import LogoController from "./logo";
     window.addEventListener('resize', onResize);
 
     const dvd = new LogoController(canvas, 'public/logo.svg');
+})();
+
+(function () {
+    const mazeSection = document.getElementById('maze')!;
+    const canvas = mazeSection.querySelector('canvas')!;
+
+    const onResize = () => {
+        canvas.width = window.innerWidth;
+        canvas.height = window.innerHeight;
+    };
+    onResize();
+    window.addEventListener('resize', onResize);
+
+    const rangeControl = (name: string) => {
+        const range = mazeSection.querySelector<HTMLInputElement>(`input[name=${name}]`)!;
+        const span = mazeSection.querySelector<HTMLSpanElement>(`input[name=${name}] ~ span`)!;
+        const onInput = () => span.innerHTML = range.value;
+        onInput();
+        range.addEventListener('input', onInput);
+        return () => parseInt(range.value);
+    }
+    const sliders = {
+        width: rangeControl('width'),
+        depth: rangeControl('depth'),
+    };
+
+    let auto = false;
+    const maze = new MazeController(canvas, sliders.width(), sliders.depth(), 'public/maze.png', auto);
+
+    const modeButton = mazeSection.querySelector<HTMLButtonElement>(`button[name=mode]`)!;
+    const changeMode = () => {
+        auto = !auto;
+        maze.setAuto(auto);
+        modeButton.innerHTML = auto ? "Автоматический режим" : "Ручной режим";
+    };
+    changeMode();
+    modeButton.addEventListener('click', changeMode);
+
+    const controlButton = (name: string, action: Action) => {
+        const button = mazeSection.querySelector<HTMLButtonElement>(`button[name=${name}]`)!;
+        button.addEventListener('click', () => !auto && maze.setAction(action));
+    }
+    controlButton('up', Action.UP);
+    controlButton('left', Action.LEFT);
+    controlButton('right', Action.RIGHT);
+
+    const keyControl = {
+        'ArrowUp': Action.UP,
+        'ArrowLeft': Action.LEFT,
+        'ArrowRight': Action.RIGHT,
+    };
+    document.addEventListener('keydown', e => {
+        if (!maze.visible || auto) return;
+        for (const [key, action] of Object.entries(keyControl)) {
+            if (e.key === key) {
+                e.preventDefault();
+                maze.setAction(action);
+            }
+        }
+    });
+
+    mazeSection.querySelector<HTMLButtonElement>(`button[name=generate]`)!.addEventListener('click', () => {
+        maze.initNewGameField(sliders.width(), sliders.depth(), auto);
+    });
 })();

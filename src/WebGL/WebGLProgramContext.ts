@@ -58,7 +58,7 @@ export default class WebGLProgramContext {
     }
 
     public textureFromImg(n: string, texture: WebGLTexture, format: GLenum, img: TexImageSource, chanelType: GLenum, unit: number,
-        mipmap: true | {generate: boolean, wrapS: GLenum, wrapT: GLenum, minFilter: GLenum}) {
+        mipmap: true | {generate: boolean, wrapS: GLenum, wrapT: GLenum, minFilter: GLenum, magFilter: GLenum}) {
         const loc = this.getUniformLoc(n);
 
         this.gl.bindTexture(this.gl.TEXTURE_2D, texture);
@@ -71,13 +71,15 @@ export default class WebGLProgramContext {
             this.gl.texParameteri(this.gl.TEXTURE_2D, this.gl.TEXTURE_WRAP_S, mipmap.wrapS);
             this.gl.texParameteri(this.gl.TEXTURE_2D, this.gl.TEXTURE_WRAP_T, mipmap.wrapT);
             this.gl.texParameteri(this.gl.TEXTURE_2D, this.gl.TEXTURE_MIN_FILTER, mipmap.minFilter);
+            this.gl.texParameteri(this.gl.TEXTURE_2D, this.gl.TEXTURE_MAG_FILTER, mipmap.magFilter);
         }
 
         this.gl.uniform1i(loc, unit);
+        this.gl.activeTexture(this.gl.TEXTURE0 + unit);
     }
 
     public textureFromBuf(n: string, texture: WebGLTexture, format: GLenum, img: ArrayBufferView, w: number, h: number, chanelType: GLenum, unit: number,
-        mipmap: true | {generate: boolean, wrapS: GLenum, wrapT: GLenum, minFilter: GLenum}) {
+        mipmap: true | {generate: boolean, wrapS: GLenum, wrapT: GLenum, minFilter: GLenum, magFilter: GLenum}) {
         const loc = this.getUniformLoc(n);
 
         this.gl.bindTexture(this.gl.TEXTURE_2D, texture);
@@ -90,9 +92,11 @@ export default class WebGLProgramContext {
             this.gl.texParameteri(this.gl.TEXTURE_2D, this.gl.TEXTURE_WRAP_S, mipmap.wrapS);
             this.gl.texParameteri(this.gl.TEXTURE_2D, this.gl.TEXTURE_WRAP_T, mipmap.wrapT);
             this.gl.texParameteri(this.gl.TEXTURE_2D, this.gl.TEXTURE_MIN_FILTER, mipmap.minFilter);
+            this.gl.texParameteri(this.gl.TEXTURE_2D, this.gl.TEXTURE_MAG_FILTER, mipmap.magFilter);
         }
 
         this.gl.uniform1i(loc, unit);
+        this.gl.activeTexture(this.gl.TEXTURE0 + unit);
     }
 
     public arrayBuffer(buf: WebGLBuffer, bytesPerVertex: GLsizei,

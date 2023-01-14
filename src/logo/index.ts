@@ -101,7 +101,7 @@ export default class LogoController {
 
             this.logo = new Logo(w, h);
             this.prog.textureFromImg('u_texture', this.glTexture, gl.ALPHA, image, gl.UNSIGNED_BYTE, 0, {
-                generate: false, wrapS: gl.CLAMP_TO_EDGE, wrapT: gl.CLAMP_TO_EDGE, minFilter: gl.NEAREST,
+                generate: false, wrapS: gl.CLAMP_TO_EDGE, wrapT: gl.CLAMP_TO_EDGE, minFilter: gl.NEAREST, magFilter: gl.NEAREST,
             });
         }
         image.src = logoUrl;
