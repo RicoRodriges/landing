@@ -1,0 +1,30 @@
+g {
+    transition: transform 500ms;
+}
+
+.chargeable {
+    transition: fill 500ms ease 250ms;
+}
+
+g.on path.chargeable {
+    fill: #fc5d3d;
+}
+g.off path.chargeable {
+    fill: #7c7b7a;
+}
+
+g.off.light0 circle.chargeable, g.off.light1 circle.chargeable, g.off.light2 circle.chargeable, g.off.light3 circle.chargeable {
+    fill: #000;
+}
+g.on.light0 circle.chargeable {
+    fill: #ff6339;
+}
+g.on.light1 circle.chargeable {
+    fill: #72aa65;
+}
+g.on.light2 circle.chargeable {
+    fill: #aadaf7;
+}
+g.on.light3 circle.chargeable {
+    fill: #ffc127;
+}

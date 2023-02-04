@@ -10,6 +10,7 @@ import SnakeController, {Direction} from "./snake";
 import LogoController from "./logo";
 import MazeController from "./maze";
 import { Action } from "./maze/Action";
+import GarlandController from "./garland/GarlandController";
 
 (function () {
     const particleSection = document.getElementById('particles')!;
@@ -30,21 +31,13 @@ import { Action } from "./maze/Action";
     const canvas = townSection.querySelector('canvas')!;
     const button = townSection.querySelector('button')!;
 
-    const rangeControl = (name: string) => {
-        const range = townSection.querySelector<HTMLInputElement>(`input[name=${name}]`)!;
-        const span = townSection.querySelector<HTMLSpanElement>(`input[name=${name}] ~ span`)!;
-        const onInput = () => span.innerHTML = range.value;
-        onInput();
-        range.addEventListener('input', onInput);
-        return () => parseInt(range.value);
-    }
     const sliders = {
-        width: rangeControl('width'),
-        depth: rangeControl('depth'),
-        height: rangeControl('height'),
-        roads: rangeControl('roads'),
-        population: rangeControl('population'),
-        vegetation: rangeControl('vegetation'),
+        width: rangeControl('width', townSection),
+        depth: rangeControl('depth', townSection),
+        height: rangeControl('height', townSection),
+        roads: rangeControl('roads', townSection),
+        population: rangeControl('population', townSection),
+        vegetation: rangeControl('vegetation', townSection),
     };
 
     const onResize = () => {
@@ -259,17 +252,9 @@ import { Action } from "./maze/Action";
     onResize();
     window.addEventListener('resize', onResize);
 
-    const rangeControl = (name: string) => {
-        const range = mazeSection.querySelector<HTMLInputElement>(`input[name=${name}]`)!;
-        const span = mazeSection.querySelector<HTMLSpanElement>(`input[name=${name}] ~ span`)!;
-        const onInput = () => span.innerHTML = range.value;
-        onInput();
-        range.addEventListener('input', onInput);
-        return () => parseInt(range.value);
-    }
     const sliders = {
-        width: rangeControl('width'),
-        depth: rangeControl('depth'),
+        width: rangeControl('width', mazeSection),
+        depth: rangeControl('depth', mazeSection),
     };
 
     let auto = false;
@@ -311,3 +296,50 @@ import { Action } from "./maze/Action";
         maze.initNewGameField(sliders.width(), sliders.depth(), auto);
     });
 })();
+
+(function () {
+    const garlandSection = document.getElementById('garland')!;
+    const svg = garlandSection.querySelector('svg')!;
+
+    const sliders = {
+        width: rangeControl('width', garlandSection),
+        height: rangeControl('height', garlandSection),
+        generators: rangeControl('generators', garlandSection),
+    }
+
+    let game: GarlandController | undefined;
+    const generateGameField = () => {
+        const meter = garlandSection.querySelector<HTMLMeterElement>('meter')!;
+        const span = garlandSection.querySelector<HTMLSpanElement>('meter ~ span')!;
+
+        let initialized = false;
+        const onProgress = (c: number, total: number) => {
+            if (!initialized) {
+                meter.setAttribute('min', '0');
+                meter.setAttribute('max', total + '');
+                meter.setAttribute('low', Math.floor(total / 100 * 40) + '');
+                meter.setAttribute('high', Math.floor(total / 100 * 80) + '');
+                meter.setAttribute('optimum', total + '');
+                initialized = true;
+            }
+            meter.setAttribute('value', c + '');
+            span.innerHTML = c === total ? '100' : Math.floor(100 / total * c) + '';
+        }
+
+        game?.unmount();
+        game = new GarlandController(svg, sliders.width(), sliders.height(), sliders.generators(), onProgress);
+    };
+
+    garlandSection.querySelector<HTMLButtonElement>(`button[name=generate]`)!.addEventListener('click', generateGameField);
+    generateGameField();
+})();
+
+
+function rangeControl(name: string, container: HTMLElement) {
+    const range = container.querySelector<HTMLInputElement>(`input[name=${name}]`)!;
+    const span = container.querySelector<HTMLSpanElement>(`input[name=${name}] ~ span`)!;
+    const onInput = () => span.innerHTML = range.value;
+    onInput();
+    range.addEventListener('input', onInput);
+    return () => parseInt(range.value);
+}
